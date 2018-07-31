@@ -119,9 +119,9 @@ static void usbnet_link_change(int link, PROFILE_T *profile) {
         requestGetIPAddress(profile, IpFamilyV4);
         if (profile->IsDualIPSupported)
             requestGetIPAddress(profile, IpFamilyV6);
-        udhcpc_start(profile);
+        //fb link up
     } else {
-        udhcpc_stop(profile);
+        //fb link down
     }
 
 #ifdef LINUX_RIL_SHLIB

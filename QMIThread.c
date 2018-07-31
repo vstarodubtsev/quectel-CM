@@ -1,5 +1,5 @@
+#include <string.h>
 #include "QMIThread.h"
-extern char *strndup (const char *__string, size_t __n);
 
 int qmiclientId[QMUX_TYPE_WDS_ADMIN + 1]; //GobiNet use fd to indicate client ID, so type of qmiclientId must be int
 static uint32_t WdsConnectionIPv4Handle = 0;
