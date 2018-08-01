@@ -245,7 +245,7 @@ static USHORT WdsSetAutoConnect(PQMUX_MSG pMUXMsg, void *arg) {
     return sizeof(QMIWDS_SET_AUTO_CONNECT_REQ_MSG);
 }
 
-static USHORT WdaSetDataFormat(PQMUX_MSG pMUXMsg, void *arg) {
+static USHORT WdaSetDataFormat(PQMUX_MSG pMUXMsg, void *arg __attribute__((unused))) {
     PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV_QOS pWdsAdminQosTlv;
     PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV linkProto;
     PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV dlTlp;
@@ -412,7 +412,7 @@ static USHORT WdsModifyProfileSettingsReq(PQMUX_MSG pMUXMsg, void *arg) {
 }
 #endif
 
-static USHORT WdsGetRuntimeSettingReq(PQMUX_MSG pMUXMsg, void *arg) {
+static USHORT WdsGetRuntimeSettingReq(PQMUX_MSG pMUXMsg, void *arg __attribute__((unused))) {
    pMUXMsg->GetRuntimeSettingsReq.TLVType = 0x10;
    pMUXMsg->GetRuntimeSettingsReq.TLVLength = cpu_to_le16(0x04);
    // the following mask also applies to IPV6
@@ -1716,7 +1716,7 @@ __requestSetupDataCall:
     return 0;
 }
 
-int requestDeactivateDefaultPDP(PROFILE_T *profile, int curIpFamily) {
+int requestDeactivateDefaultPDP(PROFILE_T *profile __attribute__((unused)), int curIpFamily) {
     PQCQMIMSG pRequest;
     PQCQMIMSG pResponse;
     PQMUX_MSG pMUXMsg;

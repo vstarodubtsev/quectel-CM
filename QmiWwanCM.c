@@ -47,7 +47,7 @@ static PQCQMIMSG ComposeQCTLMsg(USHORT QMICTLType, CUSTOMQCTL customQctlMsgFunct
     return pRequest;
 }
 
-static USHORT CtlGetVersionReq(PQMICTL_MSG QCTLMsg, void *arg) {
+static USHORT CtlGetVersionReq(PQMICTL_MSG QCTLMsg, void *arg __attribute__((unused))) {
    QCTLMsg->GetVersionReq.TLVType       = QCTLV_TYPE_REQUIRED_PARAMETER;
    QCTLMsg->GetVersionReq.TLVLength     = cpu_to_le16(0x0001);
    QCTLMsg->GetVersionReq.QMUXTypes     = QMUX_TYPE_ALL;

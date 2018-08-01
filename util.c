@@ -91,6 +91,8 @@ void dbg_time (const char *fmt, ...) {
         fprintf(logfilefp, "%s\n", line);
     }
     pthread_mutex_unlock(&printfMutex);
+
+    va_end(args);
 }
 
 const int i = 1;

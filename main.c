@@ -176,15 +176,21 @@ static int check_ipv4_address(PROFILE_T *now_profile) {
 }
 
 static void main_send_event_to_qmidevice(int triger_event) {
-     write(qmidevice_control_fd[0], &triger_event, sizeof(triger_event));
+     if (write(qmidevice_control_fd[0], &triger_event, sizeof(triger_event)) != sizeof(triger_event)) {
+          dbg_time("%s: unable to write", __func__);
+     }
 }
 
 static void send_signo_to_main(int signo) {
-     write(signal_control_fd[0], &signo, sizeof(signo));
+     if (write(signal_control_fd[0], &signo, sizeof(signo)) != sizeof(signo)) {
+          dbg_time("%s: unable to write", __func__);
+	 }
 }
 
 void qmidevice_send_event_to_main(int triger_event) {
-     write(qmidevice_control_fd[1], &triger_event, sizeof(triger_event));
+     if (write(qmidevice_control_fd[1], &triger_event, sizeof(triger_event)) != sizeof(triger_event)) {
+          dbg_time("%s: unable to write", __func__);
+     }
 }
 
 #define MAX_PATH 256
@@ -323,6 +329,10 @@ static int usage(const char *progname) {
      dbg_time("-s [apn [user password auth]] Set apn/user/password/auth get from your network provider");
      dbg_time("-p pincode                    Verify sim card pin if sim card is locked");
      dbg_time("-f logfilename                Save log message of this program to file");
+     dbg_time("-i usbnet adapter name");
+     dbg_time("-n set pdp number");
+     dbg_time("-6 support ipv4&ipv6");
+     dbg_time("-v debug qmi");
      dbg_time("Example 1: %s ", progname);
      dbg_time("Example 2: %s -s 3gnet ", progname);
      dbg_time("Example 3: %s -s 3gnet carl 1234 0 -p 1234 -f gobinet_log.txt", progname);
