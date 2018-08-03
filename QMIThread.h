@@ -166,9 +166,4 @@ extern int qmidevice_control_fd[2];
 extern int qmiclientId[QMUX_TYPE_WDS_ADMIN + 1];
 extern int cdc_wdm_fd;
 extern void dbg_time (const char *fmt, ...);
-extern USHORT le16_to_cpu(USHORT v16);
-extern UINT  le32_to_cpu (UINT v32);
-extern UINT  ql_swap32(UINT v32);
-extern USHORT cpu_to_le16(USHORT v16);
-extern UINT cpu_to_le32(UINT v32);
 #endif

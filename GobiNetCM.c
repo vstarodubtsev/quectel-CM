@@ -28,7 +28,7 @@ int GobiNetSendQMI(PQCQMIMSG pRequest) {
 
     // Always ready to write
     if (1 == 1) {
-        ssize_t nwrites = le16_to_cpu(pRequest->QMIHdr.Length) + 1 - sizeof(QCQMI_HDR);
+        ssize_t nwrites = le16toh(pRequest->QMIHdr.Length) + 1 - sizeof(QCQMI_HDR);
         ret = write(fd, &pRequest->MUXMsg, nwrites);
         if (ret == nwrites) {
             ret = 0;
@@ -193,7 +193,7 @@ void * GobiNetThread(void *pData) {
                 }
 
                 pResponse->QMIHdr.IFType = USB_CTL_MSG_TYPE_QMI;
-                pResponse->QMIHdr.Length = cpu_to_le16(nreads + sizeof(QCQMI_HDR)  - 1);
+                pResponse->QMIHdr.Length = htole16(nreads + sizeof(QCQMI_HDR)  - 1);
                 pResponse->QMIHdr.CtlFlags = 0x00;
                 pResponse->QMIHdr.ClientId = fd & 0xFF;
 

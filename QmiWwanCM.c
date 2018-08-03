@@ -28,14 +28,14 @@ static PQCQMIMSG ComposeQCTLMsg(USHORT QMICTLType, CUSTOMQCTL customQctlMsgFunct
 
     pRequest->CTLMsg.QMICTLMsgHdr.CtlFlags = QMICTL_FLAG_REQUEST;
     pRequest->CTLMsg.QMICTLMsgHdr.TransactionId = GetQCTLTransactionId();
-    pRequest->CTLMsg.QMICTLMsgHdr.QMICTLType = cpu_to_le16(QMICTLType);
+    pRequest->CTLMsg.QMICTLMsgHdr.QMICTLType = htole16(QMICTLType);
     if (customQctlMsgFunction)
-        pRequest->CTLMsg.QMICTLMsgHdr.Length = cpu_to_le16(customQctlMsgFunction(&pRequest->CTLMsg, arg) - sizeof(QCQMICTL_MSG_HDR));
+        pRequest->CTLMsg.QMICTLMsgHdr.Length = htole16(customQctlMsgFunction(&pRequest->CTLMsg, arg) - sizeof(QCQMICTL_MSG_HDR));
     else
-        pRequest->CTLMsg.QMICTLMsgHdr.Length = cpu_to_le16(0x0000);
+        pRequest->CTLMsg.QMICTLMsgHdr.Length = htole16(0x0000);
 
-    pRequest->QMIHdr.Length = cpu_to_le16(le16_to_cpu(pRequest->CTLMsg.QMICTLMsgHdr.Length) + sizeof(QCQMICTL_MSG_HDR) + sizeof(QCQMI_HDR) - 1);
-    Length = le16_to_cpu(pRequest->QMIHdr.Length) + 1;
+    pRequest->QMIHdr.Length = htole16(le16toh(pRequest->CTLMsg.QMICTLMsgHdr.Length) + sizeof(QCQMICTL_MSG_HDR) + sizeof(QCQMI_HDR) - 1);
+    Length = le16toh(pRequest->QMIHdr.Length) + 1;
 
     pRequest = (PQCQMIMSG)malloc(Length);
     if (pRequest == NULL) {
@@ -49,21 +49,21 @@ static PQCQMIMSG ComposeQCTLMsg(USHORT QMICTLType, CUSTOMQCTL customQctlMsgFunct
 
 static USHORT CtlGetVersionReq(PQMICTL_MSG QCTLMsg, void *arg __attribute__((unused))) {
    QCTLMsg->GetVersionReq.TLVType       = QCTLV_TYPE_REQUIRED_PARAMETER;
-   QCTLMsg->GetVersionReq.TLVLength     = cpu_to_le16(0x0001);
+   QCTLMsg->GetVersionReq.TLVLength     = htole16(0x0001);
    QCTLMsg->GetVersionReq.QMUXTypes     = QMUX_TYPE_ALL;
    return sizeof(QMICTL_GET_VERSION_REQ_MSG);
 }
 
 static USHORT CtlGetClientIdReq(PQMICTL_MSG QCTLMsg, void *arg) {
    QCTLMsg->GetClientIdReq.TLVType       = QCTLV_TYPE_REQUIRED_PARAMETER;
-   QCTLMsg->GetClientIdReq.TLVLength     = cpu_to_le16(0x0001);
+   QCTLMsg->GetClientIdReq.TLVLength     = htole16(0x0001);
    QCTLMsg->GetClientIdReq.QMIType     = ((UCHAR *)arg)[0];
    return sizeof(QMICTL_GET_CLIENT_ID_REQ_MSG);
 }
 
 static USHORT CtlReleaseClientIdReq(PQMICTL_MSG QCTLMsg, void *arg) {
    QCTLMsg->ReleaseClientIdReq.TLVType       = QCTLV_TYPE_REQUIRED_PARAMETER;
-   QCTLMsg->ReleaseClientIdReq.TLVLength     = cpu_to_le16(0x0002);
+   QCTLMsg->ReleaseClientIdReq.TLVLength     = htole16(0x0002);
    QCTLMsg->ReleaseClientIdReq.QMIType     = ((UCHAR *)arg)[0];
    QCTLMsg->ReleaseClientIdReq.ClientId = ((UCHAR *)arg)[1] ;
    return sizeof(QMICTL_RELEASE_CLIENT_ID_REQ_MSG);
@@ -86,7 +86,7 @@ int QmiWwanSendQMI(PQCQMIMSG pRequest) {
     } while ((ret < 0) && (errno == EINTR));
 
     if (pollfds[0].revents & POLLOUT) {
-        ssize_t nwrites = le16_to_cpu(pRequest->QMIHdr.Length) + 1;
+        ssize_t nwrites = le16toh(pRequest->QMIHdr.Length) + 1;
         ret = write(cdc_wdm_fd, pRequest, nwrites);
         if (ret == nwrites) {
             ret = 0;
@@ -106,8 +106,8 @@ static int QmiWwanGetClientID(UCHAR QMIType) {
     QmiThreadSendQMI(ComposeQCTLMsg(QMICTL_GET_CLIENT_ID_REQ, CtlGetClientIdReq, &QMIType), &pResponse);
 
     if (pResponse) {
-        USHORT QMUXResult = cpu_to_le16(pResponse->CTLMsg.QMICTLMsgHdrRsp.QMUXResult);       // QMI_RESULT_SUCCESS
-        USHORT QMUXError = cpu_to_le16(pResponse->CTLMsg.QMICTLMsgHdrRsp.QMUXError);        // QMI_ERR_INVALID_ARG
+        USHORT QMUXResult = htole16(pResponse->CTLMsg.QMICTLMsgHdrRsp.QMUXResult);       // QMI_RESULT_SUCCESS
+        USHORT QMUXError = htole16(pResponse->CTLMsg.QMICTLMsgHdrRsp.QMUXError);        // QMI_ERR_INVALID_ARG
         //UCHAR QMIType = pResponse->CTLMsg.GetClientIdRsp.QMIType;
         UCHAR ClientId = pResponse->CTLMsg.GetClientIdRsp.ClientId;
 
@@ -254,8 +254,8 @@ void * QmiWwanThread(void *pData) {
                     break;
                 }
 
-                if (nreads != (le16_to_cpu(pResponse->QMIHdr.Length) + 1)) {
-                    dbg_time("%s nreads=%d,  pQCQMI->QMIHdr.Length = %d",  __func__, (int)nreads, le16_to_cpu(pResponse->QMIHdr.Length));
+                if (nreads != (le16toh(pResponse->QMIHdr.Length) + 1)) {
+                    dbg_time("%s nreads=%d,  pQCQMI->QMIHdr.Length = %d",  __func__, (int)nreads, le16toh(pResponse->QMIHdr.Length));
                     continue;
                 }
 

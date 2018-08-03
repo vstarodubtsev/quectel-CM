@@ -306,8 +306,8 @@ void dump_tlv(PQCQMUX_MSG_HDR pQMUXMsgHdr) {
 
         //if ((TLVHdr->TLVType == 0x02) && ((USHORT *)(TLVHdr+1))[0])
         {        
-            dbg("{%02x,\t%04x,\t", TLVHdr->TLVType, le16_to_cpu(TLVHdr->TLVLength));
-            for (i = 0; i < le16_to_cpu(TLVHdr->TLVLength); i++) {
+            dbg("{%02x,\t%04x,\t", TLVHdr->TLVType, le16toh(TLVHdr->TLVLength));
+            for (i = 0; i < le16toh(TLVHdr->TLVLength); i++) {
                 dbg("%02x ", ((UCHAR *)(TLVHdr+1))[i]);
             }
             dbg("}\n");
@@ -327,9 +327,9 @@ void dump_ctl(PQCQMICTL_MSG_HDR CTLHdr) {
             case QMICTL_FLAG_INDICATION: tag = "_IND"; break;
             default: tag = 0; break;
        }
-        dbg("QMICTLType:         %04x\t%s\n", le16_to_cpu(CTLHdr->QMICTLType),
-        QMUX_NAME(qmux_ctl_QMICTLType, le16_to_cpu(CTLHdr->QMICTLType), tag));     
-        dbg("Length:             %04x\n", le16_to_cpu(CTLHdr->Length));
+        dbg("QMICTLType:         %04x\t%s\n", le16toh(CTLHdr->QMICTLType),
+        QMUX_NAME(qmux_ctl_QMICTLType, le16toh(CTLHdr->QMICTLType), tag));     
+        dbg("Length:             %04x\n", le16toh(CTLHdr->Length));
 
      dump_tlv((PQCQMUX_MSG_HDR)(&CTLHdr->QMICTLType));
 }
@@ -346,42 +346,42 @@ int dump_qmux(QMI_SERVICE_TYPE serviceType, PQCQMUX_HDR QMUXHdr) {
         default: tag = 0; break;
     }
     //dbg("CtlFlags:           %02x\t\t%s\n", QMUXHdr->CtlFlags, QMUX_NAME(qmux_CtlFlags, QMUXHdr->CtlFlags, tag));
-    dbg("TransactionId:    %04x\n", le16_to_cpu(QMUXHdr->TransactionId));
+    dbg("TransactionId:    %04x\n", le16toh(QMUXHdr->TransactionId));
 
     //dbg("QCQMUX_MSG_HDR-----------------------------------\n");
     switch (serviceType) {
         case QMUX_TYPE_DMS:
-            dbg("Type:               %04x\t%s\n", le16_to_cpu(QMUXMsgHdr->Type),
-            QMUX_NAME(qmux_dms_Type, le16_to_cpu(QMUXMsgHdr->Type), tag));
+            dbg("Type:               %04x\t%s\n", le16toh(QMUXMsgHdr->Type),
+            QMUX_NAME(qmux_dms_Type, le16toh(QMUXMsgHdr->Type), tag));
         break;
         case QMUX_TYPE_NAS:
-            dbg("Type:               %04x\t%s\n", le16_to_cpu(QMUXMsgHdr->Type),
-            QMUX_NAME(qmux_nas_Type, le16_to_cpu(QMUXMsgHdr->Type), tag));
+            dbg("Type:               %04x\t%s\n", le16toh(QMUXMsgHdr->Type),
+            QMUX_NAME(qmux_nas_Type, le16toh(QMUXMsgHdr->Type), tag));
         break;
         case QMUX_TYPE_WDS:
-            dbg("Type:               %04x\t%s\n", le16_to_cpu(QMUXMsgHdr->Type),
-            QMUX_NAME(qmux_wds_Type, le16_to_cpu(QMUXMsgHdr->Type), tag));
+            dbg("Type:               %04x\t%s\n", le16toh(QMUXMsgHdr->Type),
+            QMUX_NAME(qmux_wds_Type, le16toh(QMUXMsgHdr->Type), tag));
         break;
         case QMUX_TYPE_WMS:
-            dbg("Type:               %04x\t%s\n", le16_to_cpu(QMUXMsgHdr->Type),
-            QMUX_NAME(qmux_wms_Type, le16_to_cpu(QMUXMsgHdr->Type), tag));
+            dbg("Type:               %04x\t%s\n", le16toh(QMUXMsgHdr->Type),
+            QMUX_NAME(qmux_wms_Type, le16toh(QMUXMsgHdr->Type), tag));
         break;
         case QMUX_TYPE_WDS_ADMIN:
-            dbg("Type:               %04x\t%s\n", le16_to_cpu(QMUXMsgHdr->Type),
-            QMUX_NAME(qmux_wds_admin_Type, le16_to_cpu(QMUXMsgHdr->Type), tag));
+            dbg("Type:               %04x\t%s\n", le16toh(QMUXMsgHdr->Type),
+            QMUX_NAME(qmux_wds_admin_Type, le16toh(QMUXMsgHdr->Type), tag));
         break;
         case QMUX_TYPE_UIM:
-            dbg("Type:               %04x\t%s\n", le16_to_cpu(QMUXMsgHdr->Type),
-            QMUX_NAME(qmux_uim_Type, le16_to_cpu(QMUXMsgHdr->Type), tag));
+            dbg("Type:               %04x\t%s\n", le16toh(QMUXMsgHdr->Type),
+            QMUX_NAME(qmux_uim_Type, le16toh(QMUXMsgHdr->Type), tag));
         break;
         case QMUX_TYPE_PDS:
         case QMUX_TYPE_QOS:
         case QMUX_TYPE_CTL:                
         default:
-            dbg("Type:               %04x\t%s\n", le16_to_cpu(QMUXMsgHdr->Type), "PDS/QOS/CTL/unknown!");
+            dbg("Type:               %04x\t%s\n", le16toh(QMUXMsgHdr->Type), "PDS/QOS/CTL/unknown!");
         break;    
     }
-    dbg("Length:             %04x\n", le16_to_cpu(QMUXMsgHdr->Length));
+    dbg("Length:             %04x\n", le16toh(QMUXMsgHdr->Length));
 
     dump_tlv(QMUXMsgHdr);
     
@@ -409,7 +409,7 @@ void dump_qmi(void *dataBuffer, int dataLen)
     
     //dbg("QCQMI_HDR-----------------------------------------");
     //dbg("IFType:             %02x\t\t%s", QMIHdr->IFType, QMI_NAME(qmi_IFType, QMIHdr->IFType));
-    //dbg("Length:             %04x", le16_to_cpu(QMIHdr->Length));
+    //dbg("Length:             %04x", le16toh(QMIHdr->Length));
     //dbg("CtlFlags:           %02x\t\t%s", QMIHdr->CtlFlags, QMI_NAME(qmi_CtlFlags, QMIHdr->CtlFlags));
     //dbg("QMIType:            %02x\t\t%s", QMIHdr->QMIType, QMI_NAME(qmi_QMIType, QMIHdr->QMIType));
     //dbg("ClientId:           %02x", QMIHdr->ClientId);

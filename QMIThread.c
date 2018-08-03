@@ -19,7 +19,7 @@ typedef USHORT (*CUSTOMQMUX)(PQMUX_MSG pMUXMsg, void *arg);
 // To retrieve the ith (Index) TLV
 PQMI_TLV_HDR GetTLV (PQCQMUX_MSG_HDR pQMUXMsgHdr, int TLVType) {
     int TLVFind = 0;
-    USHORT Length = le16_to_cpu(pQMUXMsgHdr->Length);
+    USHORT Length = le16toh(pQMUXMsgHdr->Length);
     PQMI_TLV_HDR pTLVHdr = (PQMI_TLV_HDR)(pQMUXMsgHdr + 1);
 
     while (Length >= sizeof(QMI_TLV_HDR)) {
@@ -31,8 +31,8 @@ PQMI_TLV_HDR GetTLV (PQCQMUX_MSG_HDR pQMUXMsgHdr, int TLVType) {
             return pTLVHdr;
         }
 
-        Length -= (le16_to_cpu((pTLVHdr->TLVLength)) + sizeof(QMI_TLV_HDR));
-        pTLVHdr = (PQMI_TLV_HDR)(((UCHAR *)pTLVHdr) + le16_to_cpu(pTLVHdr->TLVLength) + sizeof(QMI_TLV_HDR));
+        Length -= (le16toh((pTLVHdr->TLVLength)) + sizeof(QMI_TLV_HDR));
+        pTLVHdr = (PQMI_TLV_HDR)(((UCHAR *)pTLVHdr) + le16toh(pTLVHdr->TLVLength) + sizeof(QMI_TLV_HDR));
     }
 
    return NULL;
@@ -62,16 +62,16 @@ static PQCQMIMSG ComposeQMUXMsg(UCHAR QMIType, USHORT Type, CUSTOMQMUX customQmu
     }
 
     pRequest->MUXMsg.QMUXHdr.CtlFlags = QMUX_CTL_FLAG_SINGLE_MSG | QMUX_CTL_FLAG_TYPE_CMD;
-    pRequest->MUXMsg.QMUXHdr.TransactionId = cpu_to_le16(GetQMUXTransactionId());
-    pRequest->MUXMsg.QMUXMsgHdr.Type = cpu_to_le16(Type);
+    pRequest->MUXMsg.QMUXHdr.TransactionId = htole16(GetQMUXTransactionId());
+    pRequest->MUXMsg.QMUXMsgHdr.Type = htole16(Type);
     if (customQmuxMsgFunction)
-        pRequest->MUXMsg.QMUXMsgHdr.Length = cpu_to_le16(customQmuxMsgFunction(&pRequest->MUXMsg, arg) - sizeof(QCQMUX_MSG_HDR));
+        pRequest->MUXMsg.QMUXMsgHdr.Length = htole16(customQmuxMsgFunction(&pRequest->MUXMsg, arg) - sizeof(QCQMUX_MSG_HDR));
     else
-        pRequest->MUXMsg.QMUXMsgHdr.Length = cpu_to_le16(0x0000);
+        pRequest->MUXMsg.QMUXMsgHdr.Length = htole16(0x0000);
 
-    pRequest->QMIHdr.Length = cpu_to_le16(le16_to_cpu(pRequest->MUXMsg.QMUXMsgHdr.Length) + sizeof(QCQMUX_MSG_HDR) + sizeof(QCQMUX_HDR)
+    pRequest->QMIHdr.Length = htole16(le16toh(pRequest->MUXMsg.QMUXMsgHdr.Length) + sizeof(QCQMUX_MSG_HDR) + sizeof(QCQMUX_HDR)
         + sizeof(QCQMI_HDR) - 1);
-    Length = le16_to_cpu(pRequest->QMIHdr.Length) + 1;
+    Length = le16toh(pRequest->QMIHdr.Length) + 1;
 
     pRequest = (PQCQMIMSG)malloc(Length);
     if (pRequest == NULL) {
@@ -155,67 +155,67 @@ static USHORT WdsStartNwInterfaceReq(PQMUX_MSG pMUXMsg, void *arg) {
     // Set technology Preferece
     pTechPref = (PQMIWDS_TECHNOLOGY_PREFERECE)(pTLV + TLVLength);
     pTechPref->TLVType = 0x30;
-    pTechPref->TLVLength = cpu_to_le16(0x01);
+    pTechPref->TLVLength = htole16(0x01);
     if (s_is_cdma == 0)
         pTechPref->TechPreference = 0x01;
     else
         pTechPref->TechPreference = 0x02;
-    TLVLength +=(le16_to_cpu(pTechPref->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+    TLVLength +=(le16toh(pTechPref->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
 
     // Set APN Name
     if (profile->apn) {
         pApnName = (PQMIWDS_APNNAME)(pTLV + TLVLength);
         pApnName->TLVType = 0x14;
-        pApnName->TLVLength = cpu_to_le16(strlen(profile->apn));
+        pApnName->TLVLength = htole16(strlen(profile->apn));
         qstrcpy((char *)&pApnName->ApnName, profile->apn);
-        TLVLength +=(le16_to_cpu(pApnName->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+        TLVLength +=(le16toh(pApnName->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     // Set User Name
     if (profile_user) {
         pUserName = (PQMIWDS_USERNAME)(pTLV + TLVLength);
         pUserName->TLVType = 0x17;
-        pUserName->TLVLength = cpu_to_le16(strlen(profile_user));
+        pUserName->TLVLength = htole16(strlen(profile_user));
         qstrcpy((char *)&pUserName->UserName, profile_user);
-        TLVLength += (le16_to_cpu(pUserName->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+        TLVLength += (le16toh(pUserName->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     // Set Password
     if (profile_password) {
         pPasswd = (PQMIWDS_PASSWD)(pTLV + TLVLength);
         pPasswd->TLVType = 0x18;
-        pPasswd->TLVLength = cpu_to_le16(strlen(profile_password));
+        pPasswd->TLVLength = htole16(strlen(profile_password));
         qstrcpy((char *)&pPasswd->Passwd, profile_password);
-	TLVLength += (le16_to_cpu(pPasswd->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+	TLVLength += (le16toh(pPasswd->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     // Set Auth Protocol
     if (profile_user && profile_password) {
         pAuthPref = (PQMIWDS_AUTH_PREFERENCE)(pTLV + TLVLength);
         pAuthPref->TLVType = 0x16;
-        pAuthPref->TLVLength = cpu_to_le16(0x01);
+        pAuthPref->TLVLength = htole16(0x01);
         pAuthPref->AuthPreference = profile_auth; // 0 ~ None, 1 ~ Pap, 2 ~ Chap, 3 ~ MsChapV2
-        TLVLength += (le16_to_cpu(pAuthPref->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+        TLVLength += (le16toh(pAuthPref->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     // Add IP Family Preference
     pIpFamily = (PQMIWDS_IP_FAMILY_TLV)(pTLV + TLVLength);
     pIpFamily->TLVType = 0x19;
-    pIpFamily->TLVLength = cpu_to_le16(0x01);
+    pIpFamily->TLVLength = htole16(0x01);
     pIpFamily->IpFamily = profile->curIpFamily;
-    TLVLength += (le16_to_cpu(pIpFamily->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+    TLVLength += (le16toh(pIpFamily->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
 
     //Set Profile Index
     if (profile->pdp) {
         PQMIWDS_PROFILE_IDENTIFIER pProfileIndex = (PQMIWDS_PROFILE_IDENTIFIER)(pTLV + TLVLength);
-        pProfileIndex->TLVLength = cpu_to_le16(0x01);
+        pProfileIndex->TLVLength = htole16(0x01);
         pProfileIndex->TLVType = 0x31;
         pProfileIndex->ProfileIndex = profile->pdp;
         if (s_is_cdma && s_hdr_personality == 0x02) {
             pProfileIndex->TLVType = 0x32; //profile_index_3gpp2
             pProfileIndex->ProfileIndex = 101;
         }
-        TLVLength += (le16_to_cpu(pProfileIndex->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+        TLVLength += (le16toh(pProfileIndex->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     return sizeof(QMIWDS_START_NETWORK_INTERFACE_REQ_MSG) + TLVLength;
@@ -223,24 +223,24 @@ static USHORT WdsStartNwInterfaceReq(PQMUX_MSG pMUXMsg, void *arg) {
 
 static USHORT WdsStopNwInterfaceReq(PQMUX_MSG pMUXMsg, void *arg) {
     pMUXMsg->StopNwInterfaceReq.TLVType = 0x01;
-    pMUXMsg->StopNwInterfaceReq.TLVLength = cpu_to_le16(0x04);
+    pMUXMsg->StopNwInterfaceReq.TLVLength = htole16(0x04);
     if (*((int *)arg) == IpFamilyV4)
-        pMUXMsg->StopNwInterfaceReq.Handle =  cpu_to_le32(WdsConnectionIPv4Handle);
+        pMUXMsg->StopNwInterfaceReq.Handle =  htole32(WdsConnectionIPv4Handle);
     else
-        pMUXMsg->StopNwInterfaceReq.Handle =  cpu_to_le32(WdsConnectionIPv6Handle);
+        pMUXMsg->StopNwInterfaceReq.Handle =  htole32(WdsConnectionIPv6Handle);
     return sizeof(QMIWDS_STOP_NETWORK_INTERFACE_REQ_MSG);
 }
 
 static USHORT WdsSetClientIPFamilyPref(PQMUX_MSG pMUXMsg, void *arg) {
     pMUXMsg->SetClientIpFamilyPrefReq.TLVType = 0x01;
-    pMUXMsg->SetClientIpFamilyPrefReq.TLVLength = cpu_to_le16(0x01);
+    pMUXMsg->SetClientIpFamilyPrefReq.TLVLength = htole16(0x01);
     pMUXMsg->SetClientIpFamilyPrefReq.IpPreference = *((UCHAR *)arg);
     return sizeof(QMIWDS_SET_CLIENT_IP_FAMILY_PREF_REQ_MSG);
 }
 
 static USHORT WdsSetAutoConnect(PQMUX_MSG pMUXMsg, void *arg) {
     pMUXMsg->SetAutoConnectReq.TLVType = 0x01;
-    pMUXMsg->SetAutoConnectReq.TLVLength = cpu_to_le16(0x01);
+    pMUXMsg->SetAutoConnectReq.TLVLength = htole16(0x01);
     pMUXMsg->SetAutoConnectReq.autoconnect_setting = *((UCHAR *)arg);
     return sizeof(QMIWDS_SET_AUTO_CONNECT_REQ_MSG);
 }
@@ -252,18 +252,18 @@ static USHORT WdaSetDataFormat(PQMUX_MSG pMUXMsg, void *arg __attribute__((unuse
 
     pWdsAdminQosTlv = (PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV_QOS)(&pMUXMsg->QMUXMsgHdr + 1);
     pWdsAdminQosTlv->TLVType = 0x10;
-    pWdsAdminQosTlv->TLVLength = cpu_to_le16(0x0001);
+    pWdsAdminQosTlv->TLVLength = htole16(0x0001);
     pWdsAdminQosTlv->QOSSetting = 0; /* no-QOS header */
 
     linkProto = (PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV)(pWdsAdminQosTlv + 1);
     linkProto->TLVType = 0x11;
-    linkProto->TLVLength = cpu_to_le16(4);
-    linkProto->Value = cpu_to_le32(0x01);     /* Set Ethernet  mode */
+    linkProto->TLVLength = htole16(4);
+    linkProto->Value = htole32(0x01);     /* Set Ethernet  mode */
 
     dlTlp = (PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV)(linkProto + 1);;
     dlTlp->TLVType = 0x13;
-    dlTlp->TLVLength = cpu_to_le16(4);
-    dlTlp->Value = cpu_to_le32(0x00);
+    dlTlp->TLVLength = htole16(4);
+    dlTlp->Value = htole32(0x00);
 
     if (sizeof(*linkProto) != 7 )
         dbg_time("%s sizeof(*linkProto) = %d, is not 7!", __func__, sizeof(*linkProto) );
@@ -277,18 +277,18 @@ static USHORT DmsUIMVerifyPinReqSend(PQMUX_MSG pMUXMsg, void *arg) {
     pMUXMsg->UIMVerifyPinReq.PINID = 0x01; //Pin1, not Puk
     pMUXMsg->UIMVerifyPinReq.PINLen = strlen((const char *)arg);
     qstrcpy((PCHAR)&pMUXMsg->UIMVerifyPinReq.PINValue, ((const char *)arg));
-    pMUXMsg->UIMVerifyPinReq.TLVLength = cpu_to_le16(2 + strlen((const char *)arg));
+    pMUXMsg->UIMVerifyPinReq.TLVLength = htole16(2 + strlen((const char *)arg));
     return sizeof(QMIDMS_UIM_VERIFY_PIN_REQ_MSG) + (strlen((const char *)arg) - 1);
 }
 
 static USHORT UimVerifyPinReqSend(PQMUX_MSG pMUXMsg, void *arg)
 {
     pMUXMsg->UIMUIMVerifyPinReq.TLVType = 0x01;
-    pMUXMsg->UIMUIMVerifyPinReq.TLVLength = cpu_to_le16(0x02);
+    pMUXMsg->UIMUIMVerifyPinReq.TLVLength = htole16(0x02);
     pMUXMsg->UIMUIMVerifyPinReq.Session_Type = 0x00;
     pMUXMsg->UIMUIMVerifyPinReq.Aid_Len = 0x00;
     pMUXMsg->UIMUIMVerifyPinReq.TLV2Type = 0x02;
-    pMUXMsg->UIMUIMVerifyPinReq.TLV2Length = cpu_to_le16(2 + strlen((const char *)arg));
+    pMUXMsg->UIMUIMVerifyPinReq.TLV2Length = htole16(2 + strlen((const char *)arg));
     pMUXMsg->UIMUIMVerifyPinReq.PINID = 0x01;  //Pin1, not Puk
     pMUXMsg->UIMUIMVerifyPinReq.PINLen= strlen((const char *)arg);
     qstrcpy((PCHAR)&pMUXMsg->UIMUIMVerifyPinReq.PINValue, ((const char *)arg));
@@ -300,13 +300,13 @@ static USHORT UimReadTransparentIMSIReqSend(PQMUX_MSG pMUXMsg, void *arg) {
     PREAD_TRANSPARENT_TLV pReadTransparent;
 
     pMUXMsg->UIMUIMReadTransparentReq.TLVType =  0x01;
-    pMUXMsg->UIMUIMReadTransparentReq.TLVLength = cpu_to_le16(0x02);
+    pMUXMsg->UIMUIMReadTransparentReq.TLVLength = htole16(0x02);
     if (!strcmp((char *)arg, "EF_ICCID")) {
         pMUXMsg->UIMUIMReadTransparentReq.Session_Type = 0x06;
         pMUXMsg->UIMUIMReadTransparentReq.Aid_Len = 0x00;
 
         pMUXMsg->UIMUIMReadTransparentReq.TLV2Type = 0x02;
-        pMUXMsg->UIMUIMReadTransparentReq.file_id = cpu_to_le16(0x2FE2);
+        pMUXMsg->UIMUIMReadTransparentReq.file_id = htole16(0x2FE2);
         pMUXMsg->UIMUIMReadTransparentReq.path_len = 0x02;
         pMUXMsg->UIMUIMReadTransparentReq.path[0] = 0x00;
         pMUXMsg->UIMUIMReadTransparentReq.path[1] = 0x3F;
@@ -316,7 +316,7 @@ static USHORT UimReadTransparentIMSIReqSend(PQMUX_MSG pMUXMsg, void *arg) {
         pMUXMsg->UIMUIMReadTransparentReq.Aid_Len = 0x00;
 
         pMUXMsg->UIMUIMReadTransparentReq.TLV2Type = 0x02;
-        pMUXMsg->UIMUIMReadTransparentReq.file_id = cpu_to_le16(0x6F07);
+        pMUXMsg->UIMUIMReadTransparentReq.file_id = htole16(0x6F07);
         pMUXMsg->UIMUIMReadTransparentReq.path_len = 0x04;
         pMUXMsg->UIMUIMReadTransparentReq.path[0] = 0x00;
         pMUXMsg->UIMUIMReadTransparentReq.path[1] = 0x3F;
@@ -324,13 +324,13 @@ static USHORT UimReadTransparentIMSIReqSend(PQMUX_MSG pMUXMsg, void *arg) {
         pMUXMsg->UIMUIMReadTransparentReq.path[3] = 0x7F;
     }
 
-    pMUXMsg->UIMUIMReadTransparentReq.TLV2Length = cpu_to_le16(3 +  pMUXMsg->UIMUIMReadTransparentReq.path_len);
+    pMUXMsg->UIMUIMReadTransparentReq.TLV2Length = htole16(3 +  pMUXMsg->UIMUIMReadTransparentReq.path_len);
 
     pReadTransparent = (PREAD_TRANSPARENT_TLV)(&pMUXMsg->UIMUIMReadTransparentReq.path[0] + pMUXMsg->UIMUIMReadTransparentReq.path_len);
     pReadTransparent->TLVType = 0x03;
-    pReadTransparent->TLVLength = cpu_to_le16(0x04);
-    pReadTransparent->Offset = cpu_to_le16(0x00);
-    pReadTransparent->Length = cpu_to_le16(0x00);
+    pReadTransparent->TLVLength = htole16(0x04);
+    pReadTransparent->Offset = htole16(0x00);
+    pReadTransparent->Length = htole16(0x00);
 
     return (sizeof(QMIUIM_READ_TRANSPARENT_REQ_MSG) + pMUXMsg->UIMUIMReadTransparentReq.path_len + sizeof(READ_TRANSPARENT_TLV));
 }
@@ -340,9 +340,9 @@ static USHORT UimReadTransparentIMSIReqSend(PQMUX_MSG pMUXMsg, void *arg) {
 #ifdef CONFIG_APN
 static USHORT WdsGetProfileSettingsReqSend(PQMUX_MSG pMUXMsg, void *arg) {
     PROFILE_T *profile = (PROFILE_T *)arg;
-    pMUXMsg->GetProfileSettingsReq.Length = cpu_to_le16(sizeof(QMIWDS_GET_PROFILE_SETTINGS_REQ_MSG) - 4);
+    pMUXMsg->GetProfileSettingsReq.Length = htole16(sizeof(QMIWDS_GET_PROFILE_SETTINGS_REQ_MSG) - 4);
     pMUXMsg->GetProfileSettingsReq.TLVType = 0x01;
-    pMUXMsg->GetProfileSettingsReq.TLVLength = cpu_to_le16(0x02);
+    pMUXMsg->GetProfileSettingsReq.TLVLength = htole16(0x02);
     pMUXMsg->GetProfileSettingsReq.ProfileType = 0x00; // 0 ~ 3GPP, 1 ~ 3GPP2
     pMUXMsg->GetProfileSettingsReq.ProfileIndex = profile->pdp;
     return sizeof(QMIWDS_GET_PROFILE_SETTINGS_REQ_MSG);
@@ -354,9 +354,9 @@ static USHORT WdsModifyProfileSettingsReq(PQMUX_MSG pMUXMsg, void *arg) {
     PROFILE_T *profile = (PROFILE_T *)arg;
     PQMIWDS_PDPTYPE pPdpType;
 
-    pMUXMsg->ModifyProfileSettingsReq.Length = cpu_to_le16(sizeof(QMIWDS_MODIFY_PROFILE_SETTINGS_REQ_MSG) - 4);
+    pMUXMsg->ModifyProfileSettingsReq.Length = htole16(sizeof(QMIWDS_MODIFY_PROFILE_SETTINGS_REQ_MSG) - 4);
     pMUXMsg->ModifyProfileSettingsReq.TLVType = 0x01;
-    pMUXMsg->ModifyProfileSettingsReq.TLVLength = cpu_to_le16(0x02);
+    pMUXMsg->ModifyProfileSettingsReq.TLVLength = htole16(0x02);
     pMUXMsg->ModifyProfileSettingsReq.ProfileType = 0x00; // 0 ~ 3GPP, 1 ~ 3GPP2
     pMUXMsg->ModifyProfileSettingsReq.ProfileIndex = profile->pdp;
 
@@ -364,48 +364,48 @@ static USHORT WdsModifyProfileSettingsReq(PQMUX_MSG pMUXMsg, void *arg) {
 
     pPdpType = (PQMIWDS_PDPTYPE)(pTLV + TLVLength);
     pPdpType->TLVType = 0x11;
-    pPdpType->TLVLength = cpu_to_le16(0x01);
+    pPdpType->TLVLength = htole16(0x01);
 // 0 ?C PDP-IP (IPv4)
 // 1 ?C PDP-PPP
 // 2 ?C PDP-IPv6
 // 3 ?C PDP-IPv4v6
     pPdpType->PdpType = 3;
-    TLVLength +=(le16_to_cpu(pPdpType->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+    TLVLength +=(le16toh(pPdpType->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
 
     // Set APN Name
     if (profile->apn) {
         PQMIWDS_APNNAME pApnName = (PQMIWDS_APNNAME)(pTLV + TLVLength);
         pApnName->TLVType = 0x14;
-        pApnName->TLVLength = cpu_to_le16(strlen(profile->apn));
+        pApnName->TLVLength = htole16(strlen(profile->apn));
         qstrcpy((char *)&pApnName->ApnName, profile->apn);
-        TLVLength +=(le16_to_cpu(pApnName->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+        TLVLength +=(le16toh(pApnName->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     // Set User Name
     if (profile->user) {
         PQMIWDS_USERNAME pUserName = (PQMIWDS_USERNAME)(pTLV + TLVLength);
         pUserName->TLVType = 0x1B;
-        pUserName->TLVLength = cpu_to_le16(strlen(profile->user));
+        pUserName->TLVLength = htole16(strlen(profile->user));
         qstrcpy((char *)&pUserName->UserName, profile->user);
-        TLVLength += (le16_to_cpu(pUserName->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+        TLVLength += (le16toh(pUserName->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     // Set Password
     if (profile->password) {
         PQMIWDS_PASSWD pPasswd = (PQMIWDS_PASSWD)(pTLV + TLVLength);
         pPasswd->TLVType = 0x1C;
-        pPasswd->TLVLength = cpu_to_le16(strlen(profile->password));
+        pPasswd->TLVLength = htole16(strlen(profile->password));
         qstrcpy((char *)&pPasswd->Passwd, profile->password);
-        TLVLength +=(le16_to_cpu(pPasswd->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+        TLVLength +=(le16toh(pPasswd->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     // Set Auth Protocol
     if (profile->user && profile->password) {
         PQMIWDS_AUTH_PREFERENCE pAuthPref = (PQMIWDS_AUTH_PREFERENCE)(pTLV + TLVLength);
         pAuthPref->TLVType = 0x1D;
-        pAuthPref->TLVLength = cpu_to_le16(0x01);
+        pAuthPref->TLVLength = htole16(0x01);
         pAuthPref->AuthPreference = profile->auth; // 0 ~ None, 1 ~ Pap, 2 ~ Chap, 3 ~ MsChapV2
-        TLVLength += (le16_to_cpu(pAuthPref->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
+        TLVLength += (le16toh(pAuthPref->TLVLength) + sizeof(QCQMICTL_TLV_HDR));
     }
 
     return sizeof(QMIWDS_MODIFY_PROFILE_SETTINGS_REQ_MSG) + TLVLength;
@@ -414,9 +414,9 @@ static USHORT WdsModifyProfileSettingsReq(PQMUX_MSG pMUXMsg, void *arg) {
 
 static USHORT WdsGetRuntimeSettingReq(PQMUX_MSG pMUXMsg, void *arg __attribute__((unused))) {
    pMUXMsg->GetRuntimeSettingsReq.TLVType = 0x10;
-   pMUXMsg->GetRuntimeSettingsReq.TLVLength = cpu_to_le16(0x04);
+   pMUXMsg->GetRuntimeSettingsReq.TLVLength = htole16(0x04);
    // the following mask also applies to IPV6
-   pMUXMsg->GetRuntimeSettingsReq.Mask = cpu_to_le32(QMIWDS_GET_RUNTIME_SETTINGS_MASK_IPV4DNS_ADDR |
+   pMUXMsg->GetRuntimeSettingsReq.Mask = htole32(QMIWDS_GET_RUNTIME_SETTINGS_MASK_IPV4DNS_ADDR |
                                           QMIWDS_GET_RUNTIME_SETTINGS_MASK_IPV4_ADDR |
                                           QMIWDS_GET_RUNTIME_SETTINGS_MASK_MTU |
                                           QMIWDS_GET_RUNTIME_SETTINGS_MASK_IPV4GATEWAY_ADDR); // |
@@ -439,8 +439,8 @@ static int is_response(const PQCQMIMSG pRequest, const PQCQMIMSG pResponse) {
             requestTID = pRequest->CTLMsg.QMICTLMsgHdr.TransactionId;
             responseTID = pResponse->CTLMsg.QMICTLMsgHdr.TransactionId;
         } else {
-            requestTID = le16_to_cpu(pRequest->MUXMsg.QMUXHdr.TransactionId);
-            responseTID = le16_to_cpu(pResponse->MUXMsg.QMUXHdr.TransactionId);
+            requestTID = le16toh(pRequest->MUXMsg.QMUXHdr.TransactionId);
+            responseTID = le16toh(pResponse->MUXMsg.QMUXHdr.TransactionId);
         }
         return (requestTID == responseTID);
     }
@@ -460,7 +460,7 @@ int QmiThreadSendQMITimeout(PQCQMIMSG pRequest, PQCQMIMSG *ppResponse, unsigned 
     if (ppResponse)
         *ppResponse = NULL;
 
-    dump_qmi(pRequest, le16_to_cpu(pRequest->QMIHdr.Length) + 1);
+    dump_qmi(pRequest, le16toh(pRequest->QMIHdr.Length) + 1);
 
     s_pRequest = pRequest;
     s_pResponse = NULL;
@@ -507,23 +507,23 @@ void QmiThreadRecvQMI(PQCQMIMSG pResponse) {
         pthread_mutex_unlock(&s_commandmutex);
         return;
     }
-    dump_qmi(pResponse, le16_to_cpu(pResponse->QMIHdr.Length) + 1);
+    dump_qmi(pResponse, le16toh(pResponse->QMIHdr.Length) + 1);
     if (s_pRequest && is_response(s_pRequest, pResponse)) {
         free(s_pRequest);
         s_pRequest = NULL;
-        s_pResponse = malloc(le16_to_cpu(pResponse->QMIHdr.Length) + 1);
+        s_pResponse = malloc(le16toh(pResponse->QMIHdr.Length) + 1);
         if (s_pResponse != NULL) {
-            memcpy(s_pResponse, pResponse, le16_to_cpu(pResponse->QMIHdr.Length) + 1);
+            memcpy(s_pResponse, pResponse, le16toh(pResponse->QMIHdr.Length) + 1);
         }
         pthread_cond_signal(&s_commandcond);
     } else if ((pResponse->QMIHdr.QMIType == QMUX_TYPE_NAS)
-                    && (le16_to_cpu(pResponse->MUXMsg.QMUXMsgHdrResp.Type) == QMINAS_SERVING_SYSTEM_IND)) {
+                    && (le16toh(pResponse->MUXMsg.QMUXMsgHdrResp.Type) == QMINAS_SERVING_SYSTEM_IND)) {
         qmidevice_send_event_to_main(RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED);
     } else if ((pResponse->QMIHdr.QMIType == QMUX_TYPE_WDS)
-                    && (le16_to_cpu(pResponse->MUXMsg.QMUXMsgHdrResp.Type) == QMIWDS_GET_PKT_SRVC_STATUS_IND)) {
+                    && (le16toh(pResponse->MUXMsg.QMUXMsgHdrResp.Type) == QMIWDS_GET_PKT_SRVC_STATUS_IND)) {
         qmidevice_send_event_to_main(RIL_UNSOL_DATA_CALL_LIST_CHANGED);
     } else if ((pResponse->QMIHdr.QMIType == QMUX_TYPE_NAS)
-                    && (le16_to_cpu(pResponse->MUXMsg.QMUXMsgHdrResp.Type) == QMINAS_SYS_INFO_IND)) {
+                    && (le16toh(pResponse->MUXMsg.QMUXMsgHdrResp.Type) == QMINAS_SYS_INFO_IND)) {
         qmidevice_send_event_to_main(RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED);
     } else {
         if (debug_qmi)
@@ -567,15 +567,15 @@ int requestSetEthMode(PROFILE_T *profile) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     linkProto = (PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x11);
     if (linkProto != NULL) {
-        profile->rawIP = (le32_to_cpu(linkProto->Value) == 2);
+        profile->rawIP = (le32toh(linkProto->Value) == 2);
         s_9x07 = profile->rawIP;
     }
 
@@ -604,10 +604,10 @@ int requestGetPINStatus(SIM_Status *pSIMStatus) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     pPin1Status = (PQMIDMS_UIM_PIN_STATUS)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x11);
@@ -655,14 +655,14 @@ __requestGetSIMStatus:
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        if (QMI_ERR_OP_DEVICE_UNSUPPORTED == le16_to_cpu(pResponse->MUXMsg.QMUXMsgHdrResp.QMUXError)) {
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        if (QMI_ERR_OP_DEVICE_UNSUPPORTED == le16toh(pResponse->MUXMsg.QMUXMsgHdrResp.QMUXError)) {
             sleep(1);
             goto __requestGetSIMStatus;
         }
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     *pSIMStatus = SIM_ABSENT;
@@ -776,10 +776,10 @@ int requestEnterSimPin(const CHAR *pPinCode) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     free(pResponse);
@@ -807,10 +807,10 @@ int requestGetICCID(void) { //RIL_REQUEST_GET_IMSI
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     pUimContent = (PQMIUIM_CONTENT)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x11);
@@ -818,7 +818,7 @@ int requestGetICCID(void) { //RIL_REQUEST_GET_IMSI
         static char DeviceICCID[32] = {'\0'};
         int i = 0, j = 0;
 
-        for (i = 0, j = 0; i < le16_to_cpu(pUimContent->content_len); ++i) {
+        for (i = 0, j = 0; i < le16toh(pUimContent->content_len); ++i) {
             if  ((pUimContent->content[i] & 0x0F) >= 0x0A)
                 DeviceICCID[j++] = 'A' + (pUimContent->content[i] & 0x0F);
             else
@@ -858,10 +858,10 @@ int requestGetIMSI(void) { //RIL_REQUEST_GET_IMSI
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     pUimContent = (PQMIUIM_CONTENT)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x11);
@@ -869,7 +869,7 @@ int requestGetIMSI(void) { //RIL_REQUEST_GET_IMSI
         static char DeviceIMSI[32] = {'\0'};
         int i = 0, j = 0;
 
-        for (i = 0, j = 0; i < le16_to_cpu(pUimContent->content[0]); ++i) {
+        for (i = 0, j = 0; i < le16toh(pUimContent->content[0]); ++i) {
             if (i != 0)
                 DeviceIMSI[j++] = (pUimContent->content[i+1] & 0x0F) + '0';
             DeviceIMSI[j++] = ((pUimContent->content[i+1] & 0xF0) >> 0x04) + '0';
@@ -966,23 +966,23 @@ int requestGetHomeNetwork(USHORT *p_mcc, USHORT *p_mnc, USHORT *p_sid, USHORT *p
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     pHomeNetwork = (PHOME_NETWORK)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x01);
     if (pHomeNetwork && p_mcc && p_mnc ) {
-        *p_mcc = le16_to_cpu(pHomeNetwork->MobileCountryCode);
-        *p_mnc = le16_to_cpu(pHomeNetwork->MobileNetworkCode);
+        *p_mcc = le16toh(pHomeNetwork->MobileCountryCode);
+        *p_mnc = le16toh(pHomeNetwork->MobileNetworkCode);
         //dbg_time("%s MobileCountryCode: %d, MobileNetworkCode: %d", __func__, *pMobileCountryCode, *pMobileNetworkCode);
     }
 
     pHomeNetworkSystemID = (PHOME_NETWORK_SYSTEMID)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x10);
     if (pHomeNetworkSystemID && p_sid && p_nid) {
-        *p_sid = le16_to_cpu(pHomeNetworkSystemID->SystemID); //china-hefei: sid 14451
-        *p_nid = le16_to_cpu(pHomeNetworkSystemID->NetworkID);
+        *p_sid = le16toh(pHomeNetworkSystemID->SystemID); //china-hefei: sid 14451
+        *p_nid = le16toh(pHomeNetworkSystemID->NetworkID);
         //dbg_time("%s SystemID: %d, NetworkID: %d", __func__, *pSystemID, *pNetworkID);
     }
 
@@ -1054,18 +1054,18 @@ int requestGetIMSI(const char **pp_imsi, USHORT *pMobileCountryCode, USHORT *pMo
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
-    if (pMUXMsg->UIMGetIMSIResp.TLV2Type == 0x01 &&  le16_to_cpu(pMUXMsg->UIMGetIMSIResp.TLV2Length) >= 5) {
+    if (pMUXMsg->UIMGetIMSIResp.TLV2Type == 0x01 &&  le16toh(pMUXMsg->UIMGetIMSIResp.TLV2Length) >= 5) {
         int mnc_len = 2;
         unsigned i;
         char tmp[4];
 
-        if (pp_imsi) *pp_imsi = strndup((const char *)(&pMUXMsg->UIMGetIMSIResp.IMSI), le16_to_cpu(pMUXMsg->UIMGetIMSIResp.TLV2Length));
+        if (pp_imsi) *pp_imsi = strndup((const char *)(&pMUXMsg->UIMGetIMSIResp.IMSI), le16toh(pMUXMsg->UIMGetIMSIResp.TLV2Length));
 
         for (i = 0; i < sizeof(MCCMNC_CODES_HAVING_3DIGITS_MNC)/sizeof(MCCMNC_CODES_HAVING_3DIGITS_MNC[0]); i++) {
             if (!strncmp((const char *)(&pMUXMsg->UIMGetIMSIResp.IMSI), MCCMNC_CODES_HAVING_3DIGITS_MNC[i], 6)) {
@@ -1161,14 +1161,14 @@ int requestRegistrationState2(UCHAR *pPSAttachedState) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     pServiceStatusInfo = (PSERVICE_STATUS_INFO)(((PCHAR)&pMUXMsg->GetSysInfoResp) + QCQMUX_MSG_HDR_SIZE);
-    remainingLen = le16_to_cpu(pMUXMsg->GetSysInfoResp.Length);
+    remainingLen = le16toh(pMUXMsg->GetSysInfoResp.Length);
 
     s_is_cdma = 0;
     s_hdr_personality = 0;
@@ -1454,8 +1454,8 @@ int requestRegistrationState2(UCHAR *pPSAttachedState) {
         default:
             break;
         } /* switch (pServiceStatusInfo->TLYType) */
-        remainingLen -= (le16_to_cpu(pServiceStatusInfo->TLVLength) + 3);
-        pServiceStatusInfo = (PSERVICE_STATUS_INFO)((PCHAR)&pServiceStatusInfo->TLVLength + le16_to_cpu(pServiceStatusInfo->TLVLength) + sizeof(USHORT));
+        remainingLen -= (le16toh(pServiceStatusInfo->TLVLength) + 3);
+        pServiceStatusInfo = (PSERVICE_STATUS_INFO)((PCHAR)&pServiceStatusInfo->TLVLength + le16toh(pServiceStatusInfo->TLVLength) + sizeof(USHORT));
     } /* while (remainingLen > 0) */
 
     if (DeviceClass == DEVICE_CLASS_CDMA) {
@@ -1525,16 +1525,16 @@ int requestRegistrationState(UCHAR *pPSAttachedState) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     pCurrentPlmn = (PQMINAS_CURRENT_PLMN_MSG)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x12);
     if (pCurrentPlmn) {
-        MobileCountryCode = le16_to_cpu(pCurrentPlmn->MobileCountryCode);
-        MobileNetworkCode = le16_to_cpu(pCurrentPlmn->MobileNetworkCode);
+        MobileCountryCode = le16toh(pCurrentPlmn->MobileCountryCode);
+        MobileNetworkCode = le16toh(pCurrentPlmn->MobileNetworkCode);
     }
 
     *pPSAttachedState = 0;
@@ -1627,17 +1627,17 @@ int requestQueryDataCall(UCHAR  *pConnectionStatus, int curIpFamily) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     *pConnectionStatus = QWDS_PKT_DATA_DISCONNECTED;
     pPktSrvc = (PQMIWDS_PKT_SRVC_TLV)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x01);
     if (pPktSrvc) {
         *pConnectionStatus = pPktSrvc->ConnectionStatus;
-        if ((le16_to_cpu(pPktSrvc->TLVLength) == 2) && (pPktSrvc->ReconfigReqd == 0x01))
+        if ((le16toh(pPktSrvc->TLVLength) == 2) && (pPktSrvc->ReconfigReqd == 0x01))
             *pConnectionStatus = QWDS_PKT_DATA_DISCONNECTED;
     }
 
@@ -1684,10 +1684,10 @@ __requestSetupDataCall:
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError))
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError))
     {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
 
         if (curIpFamily == IpFamilyV4 && old_auth == profile->auth
             && profile->user && profile->user[0] && profile->password && profile->password[0]) {
@@ -1698,16 +1698,16 @@ __requestSetupDataCall:
 
         profile->auth = old_auth;
 
-        err = le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+        err = le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
         free(pResponse);
         return err;
     }
 
     if (curIpFamily == IpFamilyV4) {
-        WdsConnectionIPv4Handle = le32_to_cpu(pResponse->MUXMsg.StartNwInterfaceResp.Handle);
+        WdsConnectionIPv4Handle = le32toh(pResponse->MUXMsg.StartNwInterfaceResp.Handle);
         dbg_time("%s WdsConnectionIPv4Handle: 0x%08x", __func__, WdsConnectionIPv4Handle);
     } else {
-        WdsConnectionIPv6Handle = le32_to_cpu(pResponse->MUXMsg.StartNwInterfaceResp.Handle);
+        WdsConnectionIPv6Handle = le32toh(pResponse->MUXMsg.StartNwInterfaceResp.Handle);
         dbg_time("%s WdsConnectionIPv6Handle: 0x%08x", __func__, WdsConnectionIPv6Handle);
     }
 
@@ -1737,10 +1737,10 @@ int requestDeactivateDefaultPDP(PROFILE_T *profile __attribute__((unused)), int 
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     if (curIpFamily == IpFamilyV4)
@@ -1782,10 +1782,10 @@ int requestGetIPAddress(PROFILE_T *profile, int curIpFamily) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     pIpv4Addr = (PQMIWDS_GET_RUNTIME_SETTINGS_TLV_IPV4_ADDR)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, QMIWDS_GET_RUNTIME_SETTINGS_TLV_TYPE_IPV4PRIMARYDNS);
@@ -1837,7 +1837,7 @@ int requestGetIPAddress(PROFILE_T *profile, int curIpFamily) {
 
     pMtu = (PQMIWDS_GET_RUNTIME_SETTINGS_TLV_MTU)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, QMIWDS_GET_RUNTIME_SETTINGS_TLV_TYPE_MTU);
     if (pMtu) {
-        pIpv4->Mtu =  pIpv6->Mtu =  le32_to_cpu(pMtu->Mtu);
+        pIpv4->Mtu =  pIpv6->Mtu =  le32toh(pMtu->Mtu);
     }
 
     free(pResponse);
@@ -1861,10 +1861,10 @@ int requestSetProfile(PROFILE_T *profile) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     free(pResponse);
@@ -1894,10 +1894,10 @@ int requestGetProfile(PROFILE_T *profile) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     pApnName = (PQMIWDS_APNNAME)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x14);
@@ -1905,13 +1905,13 @@ int requestGetProfile(PROFILE_T *profile) {
     pPassWd = (PQMIWDS_PASSWD)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x1C);
     pAuthPref = (PQMIWDS_AUTH_PREFERENCE)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x1D);
 
-    if (pApnName/* && le16_to_cpu(pApnName->TLVLength)*/)
-        apn = strndup((const char *)(&pApnName->ApnName), le16_to_cpu(pApnName->TLVLength));
+    if (pApnName/* && le16toh(pApnName->TLVLength)*/)
+        apn = strndup((const char *)(&pApnName->ApnName), le16toh(pApnName->TLVLength));
     if (pUserName/*  && pUserName->UserName*/)
-        user = strndup((const char *)(&pUserName->UserName), le16_to_cpu(pUserName->TLVLength));
-    if (pPassWd/*  && le16_to_cpu(pPassWd->TLVLength)*/)
-        password = strndup((const char *)(&pPassWd->Passwd), le16_to_cpu(pPassWd->TLVLength));
-    if (pAuthPref/*  && le16_to_cpu(pAuthPref->TLVLength)*/) {
+        user = strndup((const char *)(&pUserName->UserName), le16toh(pUserName->TLVLength));
+    if (pPassWd/*  && le16toh(pPassWd->TLVLength)*/)
+        password = strndup((const char *)(&pPassWd->Passwd), le16toh(pPassWd->TLVLength));
+    if (pAuthPref/*  && le16toh(pAuthPref->TLVLength)*/) {
         auth = pAuthPref->AuthPreference;
     }
 
@@ -1950,17 +1950,17 @@ int requestBaseBandVersion(const char **pp_reversion) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     revId = (PDEVICE_REV_ID)GetTLV(&pResponse->MUXMsg.QMUXMsgHdr, 0x01);
 
-    if (revId && le16_to_cpu(revId->TLVLength))
+    if (revId && le16toh(revId->TLVLength))
     {
-        char *DeviceRevisionID = strndup((const char *)(&revId->RevisionID), le16_to_cpu(revId->TLVLength));
+        char *DeviceRevisionID = strndup((const char *)(&revId->RevisionID), le16toh(revId->TLVLength));
         dbg_time("%s %s", __func__, DeviceRevisionID);
         if (s_9x07 == -1) { //fail to get QMUX_TYPE_WDS_ADMIN
             if (strncmp(DeviceRevisionID, "EC20", strlen("EC20")))
@@ -2002,10 +2002,10 @@ int requestSetOperatingMode(UCHAR OperatingMode) {
     }
 
     pMUXMsg = &pResponse->MUXMsg;
-    if (le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
+    if (le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult) || le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError)) {
         dbg_time("%s QMUXResult = 0x%x, QMUXError = 0x%x", __func__,
-            le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError));
-        return le16_to_cpu(pMUXMsg->QMUXMsgHdrResp.QMUXError);
+            le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXResult), le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError));
+        return le16toh(pMUXMsg->QMUXMsgHdrResp.QMUXError);
     }
 
     free(pResponse);
